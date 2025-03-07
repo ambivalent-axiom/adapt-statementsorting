@@ -58,6 +58,19 @@
     border-radius: 4px;
   }
   
+  &__touch-guide {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    text-align: center;
+    font-size: 14px;
+    
+    @media (min-width: @mobile-breakpoint) {
+      display: none; // Hide on desktop
+    }
+  }
+  
   &__buttons {
     display: flex;
     justify-content: center;
@@ -135,6 +148,18 @@
     display: block;
     border-color: @incorrect-color;
     background-color: fade(@incorrect-color, 10%);
+  }
+  
+  // Touch-specific styling
+  &.is-touch-active {
+    opacity: 0.6;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  &-touch-clone {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border: 2px dashed darken(@statement-border-color, 20%);
+    background-color: lighten(@statement-bg-color, 3%);
   }
 }
 
@@ -234,9 +259,67 @@
   }
 }
 
+// Touch device specific styles
+.is-touch-device {
+  .statement {
+    cursor: pointer;
+    
+    // Add visual feedback for touch
+    &:active {
+      background-color: darken(@statement-hover-bg-color, 5%);
+      transform: scale(0.98);
+    }
+    
+    // Remove hover effects on touch devices to prevent sticky hover states
+    &:hover {
+      background-color: @statement-bg-color;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+  
+  // Make buckets more visually apparent as drop targets
+  .bucket {
+    &.is-dragover {
+      background-color: fade(@bucket-hover-bg-color, 30%);
+      border-color: @bucket-hover-bg-color;
+      transform: scale(1.02);
+    }
+  }
+}
+
 // Utility classes
 .u-display-none {
   display: none;
+}
+
+// No-scroll class to prevent page scrolling during drag
+.no-scroll {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: none !important;
+  touch-action: none !important;
+}
+
+// Apply across all mobile devices
+@media (max-width: @mobile-breakpoint) {
+  html, body {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .statement-sorting__widget {
+    /* Prevent default browser pull-to-refresh */
+    overscroll-behavior-y: contain;
+    touch-action: pan-x pan-y;
+  }
+  
+  /* Make sure touch styles don't get stuck */
+  .statement:active {
+    transition-duration: 0.1s;
+  }
 }
 
 // Add touch-friendly styling for mobile
