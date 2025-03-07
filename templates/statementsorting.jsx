@@ -18,10 +18,10 @@ export default function StatementSorting(props) {
   const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
   const statementsRef = useRef(null);
   const bucketsRef = useRef(null);
-  
+
   // Check if the device is touch-enabled
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  
+
   useEffect(() => {
     // Detect touch device on component mount
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -44,7 +44,7 @@ export default function StatementSorting(props) {
     }
 
     className += statement._currentItemIndex !== null ? ' is-placed' : ' is-outside'; // additional styling
-    
+
     // Add touch-active class if this statement is being touched
     if (activeTouchStatement !== null && activeTouchStatement === parseInt(statement._index)) {
       className += ' is-touch-active';
@@ -95,55 +95,55 @@ export default function StatementSorting(props) {
   // MOBILE TOUCH HANDLERS
   const handleTouchStart = (e, index) => {
     if (_isSubmitted) return false;
-    
+
     // Prevent default to avoid scrolling while dragging
     e.preventDefault();
     e.stopPropagation();
-    
+
     const touch = e.touches[0];
     setActiveTouchStatement(index);
     setTouchPosition({
       x: touch.clientX,
       y: touch.clientY
     });
-    
+
     // Create a clone of the statement for dragging visuals if needed
     const statementElement = e.currentTarget;
     statementElement.style.opacity = '0.6';
-    
+
     // Add a class to the body to prevent scrolling during drag
     document.body.classList.add('no-scroll');
-    
+
     // Set overscroll behavior to prevent pull-to-refresh
     document.documentElement.style.overscrollBehavior = 'none';
     document.body.style.overscrollBehavior = 'none';
-    
+
     // For iOS Safari which might not support overscrollBehavior
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
-    
+
     // Store the current scroll position so we can restore it later
     document.body.dataset.scrollY = window.scrollY.toString();
   };
 
   const handleTouchMove = (e) => {
     if (activeTouchStatement === null || _isSubmitted) return;
-    
+
     // Prevent scrolling while dragging - add passive: false to make it more effective
     e.preventDefault();
     e.stopPropagation();
-    
+
     const touch = e.touches[0];
     setTouchPosition({
       x: touch.clientX,
       y: touch.clientY
     });
-    
+
     // Check if touch is over any bucket
     if (bucketsRef.current) {
       const bucketElements = bucketsRef.current.querySelectorAll('.bucket');
       let foundBucket = false;
-      
+
       bucketElements.forEach((bucket, index) => {
         const rect = bucket.getBoundingClientRect();
         if (
@@ -156,7 +156,7 @@ export default function StatementSorting(props) {
           foundBucket = true;
         }
       });
-      
+
       if (!foundBucket) {
         setDragoverBucket(null);
       }
@@ -168,32 +168,32 @@ export default function StatementSorting(props) {
     document.body.classList.remove('no-scroll');
     document.documentElement.style.overscrollBehavior = '';
     document.body.style.overscrollBehavior = '';
-    
+
     // Restore position for iOS Safari
     document.body.style.position = '';
     document.body.style.width = '';
     document.body.style.top = '';
-    
+
     // Restore the scroll position
     if (document.body.dataset.scrollY) {
       window.scrollTo(0, parseInt(document.body.dataset.scrollY || '0'));
       document.body.dataset.scrollY = '';
     }
-    
+
     if (activeTouchStatement === null || _isSubmitted) {
       setActiveTouchStatement(null);
       return;
     }
-    
+
     // If we have a bucket in dragover state, drop into that bucket
     if (dragoverBucket !== null && props.moveStatementToBucket) {
       props.moveStatementToBucket(activeTouchStatement, dragoverBucket);
     }
-    
+
     // Reset drag states
     setActiveTouchStatement(null);
     setDragoverBucket(null);
-    
+
     // Reset the statement opacity if a reference exists
     if (statementsRef.current) {
       const statements = statementsRef.current.querySelectorAll('.statement');
@@ -246,14 +246,14 @@ export default function StatementSorting(props) {
 
       <div className={`component__widget statement-sorting__widget ${_isSubmitted ? 'is-submitted' : ''} ${_isModelAnswerShown ? 'is-showing-model-answer' : ''} ${isTouchDevice ? 'is-touch-device' : ''}`}>
         {/* Statements container - where statements start */}
-        <div 
+        <div
           className={`statement-sorting__statements${_isSubmitted ? '-hidden' : ''}`}
           ref={statementsRef}
         >
           {_statements.map((statement, index) => {
             // Assign index to statement for reference
             if (!statement._index) statement._index = index;
-            
+
             return statement._currentItemIndex === null
               ? (
                 <div
@@ -276,12 +276,12 @@ export default function StatementSorting(props) {
                   {statement.text}
                 </div>
               )
-              : null
+              : null;
           })}
-          
+
           {/* Show a floating statement when dragging on touch devices */}
           {activeTouchStatement !== null && (
-            <div 
+            <div
               className="statement statement-touch-clone"
               style={{
                 position: 'fixed',
