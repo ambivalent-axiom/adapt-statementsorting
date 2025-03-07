@@ -1,0 +1,63 @@
+{
+  "_id": "c-900",
+  "_parentId": "b-900",
+  "_type": "component",
+  "_component": "statementsorting",
+  "_classes": "superhero-quiz",
+  "_layout": "full-width",
+  "title": "Marvel Superheroes Quiz",
+  "displayTitle": "Test Your Marvel Knowledge",
+  "body": "Match the colors to the correct Marvel superheroes by dragging and dropping.",
+  "instruction": "Drag the correct color to each superhero. Some superheroes may have more than one correct color.",
+  "ariaRegion": "This component is a drag and drop question about Marvel superheroes. Once you have matched the colors to the heroes, select the submit button below.",
+  "_items": [
+    {
+      "text": "Correct",
+      "acceptedStatements": [
+        "Grass is green",
+        "Violets are blue",
+        "Roses are red"
+      ]
+    },
+    {
+      "text": "Incorrect",
+      "acceptedStatements": [
+        "Cats like water",
+        "Dogs meow",
+        "Roses are red"
+      ]
+    }
+  ],
+  "_attempts": 1,
+  "_canShowModelAnswer": true,
+  "_canShowFeedback": true,
+  "_canShowMarking": true,
+  "_isRandom": true,
+  "_recordInteraction": true,
+  "_questionWeight": 1,
+  "_feedback": {
+    "correct": "Great job! You know your Marvel superheroes well!",
+    "_incorrect": {
+      "final": "You've completed the quiz, but there were some mistakes. Review the correct answers to learn more about Marvel superheroes.",
+      "notFinal": "Some of your answers are incorrect. Try again!"
+    }
+  },
+  "_buttons": {
+    "_submit": {
+      "buttonText": "Submit",
+      "ariaLabel": "Submit your answers"
+    },
+    "_reset": {
+      "buttonText": "Reset",
+      "ariaLabel": "Reset the question"
+    },
+    "_showCorrectAnswer": {
+      "buttonText": "Show Correct Answer",
+      "ariaLabel": "Show the correct answer"
+    },
+    "_hideCorrectAnswer": {
+      "buttonText": "Hide Correct Answer",
+      "ariaLabel": "Hide the correct answer"
+    }
+  }
+}

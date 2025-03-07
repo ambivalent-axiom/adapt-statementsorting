@@ -1,0 +1,331 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "id": "http://jsonschema.net/statementsorting",
+  "$ref": "http://localhost/plugins/content/component/model.schema",
+  "globals": {
+    "ariaRegion": {
+      "type": "string",
+      "required": true,
+      "title": "Aria Region",
+      "default": "This component is a drag and drop question that requires you to match items with their corresponding statements.",
+      "inputType": "Text",
+      "validators": [],
+      "translatable": true
+    }
+  },
+  "properties": {
+    "_supportedLayout": {
+      "type": "string",
+      "required": true,
+      "enum": ["full-width", "half-width", "both"],
+      "default": "full-width",
+      "editorOnly": true
+    },
+    "instruction": {
+      "type": "string",
+      "required": false,
+      "default": "Drag the correct items to each statement.",
+      "inputType": "Text",
+      "validators": [],
+      "help": "Instructions for how to complete the activity",
+      "translatable": true
+    },
+    "_items": {
+      "type": "array",
+      "required": true,
+      "title": "Items",
+      "items": {
+        "type": "object",
+        "required": true,
+        "properties": {
+          "text": {
+            "type": "string",
+            "required": true,
+            "default": "",
+            "title": "Statement Text",
+            "inputType": "Text",
+            "validators": ["required"],
+            "help": "The text for this statement",
+            "translatable": true
+          },
+          "acceptedStatements": {
+            "type": "array",
+            "required": true,
+            "title": "Accepted Statements",
+            "items": {
+              "type": "string",
+              "required": true,
+              "default": "",
+              "title": "Statement",
+              "inputType": "Text",
+              "validators": ["required"],
+              "help": "The statement text to be matched with this item",
+              "translatable": true
+            }
+          },
+          "_graphic": {
+            "type": "object",
+            "required": false,
+            "title": "Statement Graphic",
+            "properties": {
+              "src": {
+                "type": "string",
+                "required": false,
+                "default": "",
+                "title": "Image Source",
+                "inputType": "Asset:image",
+                "validators": [],
+                "help": "Image associated with this statement"
+              },
+              "alt": {
+                "type": "string",
+                "required": false,
+                "default": "",
+                "title": "Alternative Text",
+                "inputType": "Text",
+                "validators": [],
+                "help": "Alternative text for the image",
+                "translatable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "_attempts": {
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "title": "Attempts",
+      "inputType": "Number",
+      "validators": ["required", "number"],
+      "help": "How many attempts the learner is allowed"
+    },
+    "_canShowModelAnswer": {
+      "type": "boolean",
+      "required": true,
+      "default": true,
+      "title": "Display Model Answer",
+      "inputType": "Checkbox",
+      "validators": [],
+      "help": "Allow the user to view the 'model answer' if they answer the question incorrectly?"
+    },
+    "_canShowFeedback": {
+      "type": "boolean",
+      "required": true,
+      "default": true,
+      "title": "Display Feedback",
+      "inputType": "Checkbox",
+      "validators": [],
+      "help": "Display feedback when the question is answered?"
+    },
+    "_canShowMarking": {
+      "type": "boolean",
+      "required": true,
+      "default": true,
+      "title": "Display Marking",
+      "inputType": "Checkbox",
+      "validators": [],
+      "help": "Display ticks and crosses when the user answers?"
+    },
+    "_isRandom": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "title": "Randomize Items",
+      "inputType": "Checkbox",
+      "validators": [],
+      "help": "Randomize the order in which items are displayed to the user?"
+    },
+    "_recordInteraction": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "title": "Record Interaction",
+      "inputType": "Checkbox",
+      "validators": [],
+      "help": "Record the user's answer to this question for reporting purposes?"
+    },
+    "_questionWeight": {
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "title": "Question Weight",
+      "inputType": "Number",
+      "validators": ["required", "number"],
+      "help": "The weighting for this question"
+    },
+    "_feedback": {
+      "type": "object",
+      "required": false,
+      "title": "Feedback",
+      "properties": {
+        "correct": {
+          "type": "string",
+          "required": false,
+          "default": "Correct! Well done.",
+          "title": "Correct",
+          "inputType": "TextArea",
+          "validators": [],
+          "help": "Feedback for when the user answers correctly",
+          "translatable": true
+        },
+        "_incorrect": {
+          "type": "object",
+          "required": false,
+          "title": "Incorrect Feedback",
+          "properties": {
+            "final": {
+              "type": "string",
+              "required": false,
+              "default": "Incorrect. The correct answer is shown.",
+              "title": "Incorrect Final",
+              "inputType": "TextArea",
+              "validators": [],
+              "help": "Feedback for when the user answers the question incorrectly after all attempts",
+              "translatable": true
+            },
+            "notFinal": {
+              "type": "string",
+              "required": false,
+              "default": "Incorrect. Try again.",
+              "title": "Incorrect Not Final",
+              "inputType": "TextArea",
+              "validators": [],
+              "help": "Feedback for when the user answers the question incorrectly but has attempts remaining",
+              "translatable": true
+            }
+          }
+        }
+      }
+    },
+    "_buttons": {
+      "type": "object",
+      "title": "Buttons",
+      "required": false,
+      "properties": {
+        "_submit": {
+          "type": "object",
+          "title": "Submit",
+          "properties": {
+            "buttonText": {
+              "type": "string",
+              "required": false,
+              "default": "Submit",
+              "title": "Button Text",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            },
+            "ariaLabel": {
+              "type": "string",
+              "required": false,
+              "default": "Submit your answers",
+              "title": "ARIA Label",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            }
+          }
+        },
+        "_reset": {
+          "type": "object",
+          "title": "Reset",
+          "properties": {
+            "buttonText": {
+              "type": "string",
+              "required": false,
+              "default": "Reset",
+              "title": "Button Text",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            },
+            "ariaLabel": {
+              "type": "string",
+              "required": false,
+              "default": "Reset the question",
+              "title": "ARIA Label",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            }
+          }
+        },
+        "_showCorrectAnswer": {
+          "type": "object",
+          "title": "Show Correct Answer",
+          "properties": {
+            "buttonText": {
+              "type": "string",
+              "required": false,
+              "default": "Show Correct Answer",
+              "title": "Button Text",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            },
+            "ariaLabel": {
+              "type": "string",
+              "required": false,
+              "default": "Show the correct answer",
+              "title": "ARIA Label",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            }
+          }
+        },
+        "_hideCorrectAnswer": {
+          "type": "object",
+          "title": "Hide Correct Answer",
+          "properties": {
+            "buttonText": {
+              "type": "string",
+              "required": false,
+              "default": "Hide Correct Answer",
+              "title": "Button Text",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            },
+            "ariaLabel": {
+              "type": "string",
+              "required": false,
+              "default": "Hide the correct answer",
+              "title": "ARIA Label",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            }
+          }
+        },
+        "_showFeedback": {
+          "type": "object",
+          "title": "Show Feedback",
+          "properties": {
+            "buttonText": {
+              "type": "string",
+              "required": false,
+              "default": "Show Feedback",
+              "title": "Button Text",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            },
+            "ariaLabel": {
+              "type": "string",
+              "required": false,
+              "default": "Show feedback",
+              "title": "ARIA Label",
+              "inputType": "Text",
+              "validators": [],
+              "translatable": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
