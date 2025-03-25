@@ -31,6 +31,15 @@
       "help": "Instructions for how to complete the activity",
       "translatable": true
     },
+    "instructionMobile": {
+      "type": "string",
+      "required": false,
+      "default": "Drag the correct items to each statement.",
+      "inputType": "Text",
+      "validators": [],
+      "help": "Instructions for how to complete the activity on touch devices",
+      "translatable": true
+    },
     "_items": {
       "type": "array",
       "required": true,

@@ -6,6 +6,7 @@ export default function StatementSorting(props) {
     _buttons,
     body,
     instruction,
+    instructionMobile,
     _items = [],
     _statements = [],
     _isSubmitted,
@@ -14,50 +15,30 @@ export default function StatementSorting(props) {
   } = props;
 
   const [dragoverBucket, setDragoverBucket] = useState(null);
-  const [activeTouchStatement, setActiveTouchStatement] = useState(null);
-  const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+  const [selectedStatement, setSelectedStatement] = useState(null);
+  const [justDroppedStatement, setJustDroppedStatement] = useState(null);
+  const [justClickedBucket, setJustClickedBucket] = useState(null);
+  const [readyForCorrectness, setReadyForCorrectness] = useState(false); // to delay class aplications Safari issue
+  const [isTouchDevice, setIsTouchDevice] = useState(false); // Check if the device is touch-enabled
   const statementsRef = useRef(null);
   const bucketsRef = useRef(null);
-  const statementElementsRef = useRef({});
 
-  // Check if the device is touch-enabled
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  useEffect(() => {
-    // Detect touch device on component mount
+  useEffect(() => { // Detect touch device on component mount
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
-  // Set up non-passive touch event listeners
   useEffect(() => {
-    // Loop through all statement elements that have refs
-    Object.entries(statementElementsRef.current).forEach(([index, element]) => {
-      if (element) {
-        const handleTouchMoveWithOptions = (e) => handleTouchMove(e);
-        const handleTouchStartWithOptions = (e) => handleTouchStart(e, parseInt(index));
+    if (_isSubmitted) {
+      // Give Safari a moment to process the state change
+      const timer = setTimeout(() => {
+        setReadyForCorrectness(true);
+      }, 100); // 100ms delay
 
-        // Remove any existing listeners to prevent duplicates
-        element.removeEventListener('touchmove', handleTouchMoveWithOptions);
-        element.removeEventListener('touchstart', handleTouchStartWithOptions);
-
-        // Add the touch listeners with passive: false
-        element.addEventListener('touchmove', handleTouchMoveWithOptions, { passive: false });
-        element.addEventListener('touchstart', handleTouchStartWithOptions, { passive: false });
-      }
-    });
-
-    // Cleanup function
-    return () => {
-      Object.entries(statementElementsRef.current).forEach(([index, element]) => {
-        if (element) {
-          const handleTouchMoveWithOptions = (e) => handleTouchMove(e);
-          const handleTouchStartWithOptions = (e) => handleTouchStart(e, parseInt(index));
-          element.removeEventListener('touchmove', handleTouchMoveWithOptions);
-          element.removeEventListener('touchstart', handleTouchStartWithOptions);
-        }
-      });
-    };
-  }, [_statements, activeTouchStatement]); // Re-run when statements or active touch changes
+      return () => clearTimeout(timer);
+    } else {
+      setReadyForCorrectness(false);
+    }
+  }, [_isSubmitted]);
 
   // Generate statement className based on state
   const getStatementClass = (statement) => {
@@ -65,7 +46,7 @@ export default function StatementSorting(props) {
 
     let className = 'statement';
 
-    if (_isSubmitted) {
+    if (_isSubmitted && readyForCorrectness) {
       if (_isModelAnswerShown) {
         // When showing model answer, all statements appear correct
         className += ' is-correct';
@@ -77,9 +58,14 @@ export default function StatementSorting(props) {
 
     className += statement._currentItemIndex !== null ? ' is-placed' : ' is-outside'; // additional styling
 
-    // Add touch-active class if this statement is being touched
-    if (activeTouchStatement !== null && activeTouchStatement === parseInt(statement._index)) {
-      className += ' is-touch-active';
+    // Add selected class if this statement is selected on mobile
+    if (selectedStatement !== null && selectedStatement === parseInt(statement._index)) {
+      className += ' is-selected';
+    }
+
+    // Add just-dropped class to highlight statements when placed
+    if (justDroppedStatement !== null && justDroppedStatement === parseInt(statement._index)) {
+      className += ' is-just-dropped';
     }
 
     return className;
@@ -124,126 +110,45 @@ export default function StatementSorting(props) {
     }
   };
 
-  // MOBILE TOUCH HANDLERS
-  const handleTouchStart = (e, index) => {
+  // MOBILE CLICK HANDLERS
+  const handleStatementClick = (index) => {
     if (_isSubmitted) return false;
 
-    // Prevent default to avoid scrolling while dragging
-    e.preventDefault();
-    e.stopPropagation();
+    // Clear any previously just-dropped state
+    setJustDroppedStatement(null);
 
-    const touch = e.touches[0];
-    setActiveTouchStatement(index);
-    setTouchPosition({
-      x: touch.clientX,
-      y: touch.clientY
-    });
-
-    // Create a clone of the statement for dragging visuals if needed
-    const statementElement = e.currentTarget;
-    statementElement.style.opacity = '0.6';
-
-    // Add a class to the body to prevent scrolling during drag
-    document.body.classList.add('no-scroll');
-
-    // Set overscroll behavior to prevent pull-to-refresh
-    document.documentElement.style.overscrollBehavior = 'none';
-    document.body.style.overscrollBehavior = 'none';
-
-    // For iOS Safari which might not support overscrollBehavior
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-
-    // Store the current scroll position so we can restore it later
-    document.body.dataset.scrollY = window.scrollY.toString();
-  };
-
-  const handleTouchMove = (e) => {
-    if (activeTouchStatement === null || _isSubmitted) return;
-
-    // Prevent scrolling while dragging
-    e.preventDefault();
-    e.stopPropagation();
-
-    const touch = e.touches[0];
-    setTouchPosition({
-      x: touch.clientX,
-      y: touch.clientY
-    });
-
-    // Check if touch is over any bucket
-    if (bucketsRef.current) {
-      const bucketElements = bucketsRef.current.querySelectorAll('.bucket');
-      let foundBucket = false;
-
-      bucketElements.forEach((bucket, index) => {
-        const rect = bucket.getBoundingClientRect();
-        if (
-          touch.clientX >= rect.left &&
-          touch.clientX <= rect.right &&
-          touch.clientY >= rect.top &&
-          touch.clientY <= rect.bottom
-        ) {
-          setDragoverBucket(index);
-          foundBucket = true;
-        }
-      });
-
-      if (!foundBucket) {
-        setDragoverBucket(null);
-      }
+    // Toggle selection
+    if (selectedStatement === index) {
+      setSelectedStatement(null);
+    } else {
+      setSelectedStatement(index);
     }
   };
 
-  const handleTouchEnd = (e) => {
-    // Always restore scrolling capability regardless of state
-    document.body.classList.remove('no-scroll');
-    document.documentElement.style.overscrollBehavior = '';
-    document.body.style.overscrollBehavior = '';
+  const handleBucketClick = (bucketIndex) => {
+    if (_isSubmitted || selectedStatement === null) return false;
 
-    // Restore position for iOS Safari
-    document.body.style.position = '';
-    document.body.style.width = '';
-    document.body.style.top = '';
+    // Set the just-clicked bucket state
+    setJustClickedBucket(bucketIndex);
 
-    // Restore the scroll position
-    if (document.body.dataset.scrollY) {
-      window.scrollTo(0, parseInt(document.body.dataset.scrollY || '0'));
-      document.body.dataset.scrollY = '';
-    }
+    // Move the selected statement to the clicked bucket
+    if (props.moveStatementToBucket) {
+      props.moveStatementToBucket(selectedStatement, bucketIndex);
 
-    if (activeTouchStatement === null || _isSubmitted) {
-      setActiveTouchStatement(null);
-      return;
-    }
+      // Set the just-dropped state before clearing selection
+      setJustDroppedStatement(selectedStatement);
+      setSelectedStatement(null); // Clear selection after placement
 
-    // If we have a bucket in dragover state, drop into that bucket
-    if (dragoverBucket !== null && props.moveStatementToBucket) {
-      props.moveStatementToBucket(activeTouchStatement, dragoverBucket);
-    }
-
-    // Reset drag states
-    setActiveTouchStatement(null);
-    setDragoverBucket(null);
-
-    // Reset the statement opacity if a reference exists
-    if (statementsRef.current) {
-      const statements = statementsRef.current.querySelectorAll('.statement');
-      statements.forEach(statement => {
-        statement.style.opacity = '1';
-      });
+      // Clear the visual feedback states after a short delay
+      setTimeout(() => {
+        setJustDroppedStatement(null);
+        setJustClickedBucket(null);
+      }, 300); // timeout for highlight
     }
   };
 
   const isShowCorrectVisible = _isSubmitted && _canShowModelAnswer && !_isModelAnswerShown;
   const isHideCorrectVisible = _isSubmitted && _canShowModelAnswer && _isModelAnswerShown;
-
-  // Helper function to safely store refs with their indices
-  const setStatementRef = (element, index) => {
-    if (index !== undefined) {
-      statementElementsRef.current[index] = element;
-    }
-  };
 
   return (
     <div className="component__inner statement-sorting__inner">
@@ -261,14 +166,26 @@ export default function StatementSorting(props) {
           </div>
         )}
 
-        {instruction && (
+        {(instruction || (instructionMobile && isTouchDevice && !_isSubmitted)) && (
           <div className="component__instruction">
-            <div className="component__instruction-inner" dangerouslySetInnerHTML={{ __html: instruction }} />
+            {instruction && !isTouchDevice && (
+              <div
+                className="component__instruction-inner"
+                dangerouslySetInnerHTML={{ __html: instruction }}
+              />
+            )}
+            {instructionMobile && isTouchDevice && !_isSubmitted && (
+              <div
+                className="component__instruction-inner"
+                dangerouslySetInnerHTML={{ __html: instructionMobile }}
+              />
+            )}
           </div>
         )}
       </div>
 
       <div className={`component__widget statement-sorting__widget ${_isSubmitted ? 'is-submitted' : ''} ${_isModelAnswerShown ? 'is-showing-model-answer' : ''} ${isTouchDevice ? 'is-touch-device' : ''}`}>
+
         {/* Statements container - where statements start */}
         <div
           className={`statement-sorting__statements${_isSubmitted ? '-hidden' : ''}`}
@@ -284,10 +201,9 @@ export default function StatementSorting(props) {
                   key={index}
                   data-index={index}
                   className={getStatementClass(statement)}
-                  draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop if not submitted
+                  draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop
                   onDragStart={(e) => handleDragStart(e, index)}
-                  onTouchEnd={handleTouchEnd}
-                  ref={(el) => setStatementRef(el, index)}
+                  onClick={isTouchDevice ? () => handleStatementClick(index) : undefined}
                   style={{
                     position: 'absolute',
                     left: '50%',
@@ -301,25 +217,6 @@ export default function StatementSorting(props) {
               )
               : null;
           })}
-
-          {/* Show a floating statement when dragging on touch devices */}
-          {activeTouchStatement !== null && (
-            <div
-              className="statement statement-touch-clone"
-              style={{
-                position: 'fixed',
-                left: touchPosition.x,
-                top: touchPosition.y,
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000,
-                pointerEvents: 'none',
-                width: '200px',
-                opacity: 0.8
-              }}
-            >
-              {_statements[activeTouchStatement] && _statements[activeTouchStatement].text}
-            </div>
-          )}
         </div>
 
         {/* Feedback area */}
@@ -330,11 +227,16 @@ export default function StatementSorting(props) {
           {_items.map((item, index) => (
             <div
               key={index}
-              className={`bucket ${dragoverBucket === index ? 'is-dragover' : ''}`}
+              className={`bucket 
+                ${dragoverBucket === index ? 'is-dragover' : ''} 
+                ${selectedStatement !== null && isTouchDevice ? 'is-selectable' : ''}
+                ${justClickedBucket === index ? 'is-just-clicked' : ''}
+              `}
               data-index={index}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
+              onClick={isTouchDevice ? () => handleBucketClick(index) : undefined}
             >
               <div className="bucket__title">{item.text}</div>
               <div className={`bucket__graphic${_isSubmitted ? '-hidden' : ''}`}>
@@ -348,10 +250,9 @@ export default function StatementSorting(props) {
                       <div
                         key={statementIndex}
                         className={getStatementClass(statement)}
-                        draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop if not submitted
+                        draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop
                         onDragStart={(e) => handleDragStart(e, statementIndex)}
-                        onTouchEnd={handleTouchEnd}
-                        ref={(el) => setStatementRef(el, statementIndex)}
+                        onClick={isTouchDevice ? () => handleStatementClick(statementIndex) : undefined}
                       >
                         {statement.text}
                       </div>

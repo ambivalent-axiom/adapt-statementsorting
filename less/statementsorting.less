@@ -8,6 +8,8 @@
 @bucket-border-color: #ccc;
 @correct-color: #3fb34f;
 @incorrect-color: #f26c6c;
+@selected-color: #90ee90; // Light green for selected statements
+@just-dropped-color: #c212e6; // Violet color for just-dropped statements
 
 // Breakpoints
 @mobile-breakpoint: 768px;
@@ -58,7 +60,8 @@
     border-radius: 4px;
   }
   
-  &__touch-guide {
+  // Mobile instruction for click-based sorting
+  &__mobile-instruction {
     background-color: rgba(0, 0, 0, 0.05);
     padding: 10px;
     border-radius: 6px;
@@ -105,7 +108,7 @@
   padding: 10px 15px;
   margin: 5px;
   cursor: grab;
-  transition: transform 0.2s, box-shadow 0.2s, height 0.3s;
+  transition: transform 0.2s, box-shadow 0.2s, height 0.3s, background-color 0.2s;
   user-select: none;
   position: relative;
   width: 290px;
@@ -150,16 +153,37 @@
     background-color: fade(@incorrect-color, 10%);
   }
   
-  // Touch-specific styling
-  &.is-touch-active {
-    opacity: 0.6;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  // Selected statement styling for mobile click interaction
+  &.is-selected {
+    background-color: @selected-color;
+    border-color: darken(@selected-color, 20%);
+    box-shadow: 0 0 8px rgba(0, 128, 0, 0.5);
+    transform: translateY(-3px);
+    
+    &:hover {
+      background-color: darken(@selected-color, 5%);
+    }
   }
   
-  &-touch-clone {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 2px dashed darken(@statement-border-color, 20%);
-    background-color: lighten(@statement-bg-color, 3%);
+  // Just-dropped statement styling (violet highlight)
+  &.is-just-dropped {
+    background-color: fade(@just-dropped-color, 30%);
+    border-color: @just-dropped-color;
+    box-shadow: 0 0 10px fade(@just-dropped-color, 50%);
+    animation: pulse-violet 0.3s ease-out; // Reduced from 1s to 0.3s
+  }
+  
+  @keyframes pulse-violet {
+    0% {
+      background-color: fade(@just-dropped-color, 60%); // Start with higher intensity
+      box-shadow: 0 0 15px fade(@just-dropped-color, 70%);
+      transform: scale(1.05); // Add a slight scale effect for emphasis
+    }
+    100% {
+      background-color: fade(@just-dropped-color, 30%);
+      box-shadow: 0 0 5px fade(@just-dropped-color, 40%);
+      transform: scale(1);
+    }
   }
 }
 
@@ -172,7 +196,7 @@
   padding: 15px;
   background-color: @bucket-bg-color;
   min-height: 100px;
-  transition: background-color 0.6s ease, border-color 0.6s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
   
   @media (max-width: @mobile-breakpoint) {
     min-width: 180px;
@@ -233,6 +257,19 @@
     background-color: fade(@bucket-hover-bg-color, 20%);
     border-color: darken(@bucket-border-color, 10%);
   }
+  
+  // Style for buckets when a statement is selected (for mobile click interaction)
+  &.is-selectable {
+    cursor: pointer;
+    
+    &:hover {
+      background-color: fade(@bucket-hover-bg-color, 10%);
+      border-color: darken(@bucket-border-color, 15%);
+      transform: scale(1.02);
+    }
+  }
+  
+
 }
 
 // When the component is submitted
@@ -264,26 +301,47 @@
   .statement {
     cursor: pointer;
     
-    // Add visual feedback for touch
-    &:active {
-      background-color: darken(@statement-hover-bg-color, 5%);
-      transform: scale(0.98);
-    }
-    
     // Remove hover effects on touch devices to prevent sticky hover states
     &:hover {
       background-color: @statement-bg-color;
       transform: none;
       box-shadow: none;
     }
+    
+    // But keep the selected state styles
+    &.is-selected {
+      background-color: @selected-color;
+      border-color: darken(@selected-color, 20%);
+      box-shadow: 0 0 8px rgba(0, 128, 0, 0.5);
+    }
+    
+    // Keep the just-dropped state styles too
+    &.is-just-dropped {
+      background-color: fade(@just-dropped-color, 30%);
+      border-color: @just-dropped-color;
+      box-shadow: 0 0 10px fade(@just-dropped-color, 50%);
+    }
+    
+    // Add active state for better touch feedback
+    &:active {
+      transform: scale(0.98);
+    }
   }
   
-  // Make buckets more visually apparent as drop targets
+  // Make buckets more visually apparent as drop targets when a statement is selected
   .bucket {
-    &.is-dragover {
+    &.is-selectable {
+      border-color: darken(@bucket-border-color, 10%);
+      
+      &:active {
+        background-color: fade(@bucket-hover-bg-color, 15%);
+        transform: scale(0.99);
+      }
+    }
+    
+    &.is-just-clicked {
       background-color: fade(@bucket-hover-bg-color, 30%);
       border-color: @bucket-hover-bg-color;
-      transform: scale(1.02);
     }
   }
 }
@@ -291,17 +349,6 @@
 // Utility classes
 .u-display-none {
   display: none;
-}
-
-// No-scroll class to prevent page scrolling during drag
-.no-scroll {
-  overflow: hidden !important;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  overscroll-behavior: none !important;
-  -webkit-overflow-scrolling: none !important;
-  touch-action: none !important;
 }
 
 // Apply across all mobile devices
@@ -320,17 +367,17 @@
   .statement:active {
     transition-duration: 0.1s;
   }
+  
+  /* Better tap targets for mobile */
+  .statement, .bucket {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 // Add touch-friendly styling for mobile
 @media (max-width: @mobile-breakpoint) {
   .statement-sorting__widget {
     touch-action: pan-y; // Better touch scrolling
-  }
-  
-  .statement {
-    cursor: move; // Better cursor for touch devices
-    -webkit-tap-highlight-color: transparent; // Remove tap highlight on iOS
   }
   
   // Better tap target sizes for buttons
