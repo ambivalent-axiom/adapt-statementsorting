@@ -18,6 +18,7 @@ export default function StatementSorting(props) {
   const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
   const statementsRef = useRef(null);
   const bucketsRef = useRef(null);
+  const statementElementsRef = useRef({});
 
   // Check if the device is touch-enabled
   const [isTouchDevice, setIsTouchDevice] = useState(false);
@@ -26,6 +27,37 @@ export default function StatementSorting(props) {
     // Detect touch device on component mount
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
+
+  // Set up non-passive touch event listeners
+  useEffect(() => {
+    // Loop through all statement elements that have refs
+    Object.entries(statementElementsRef.current).forEach(([index, element]) => {
+      if (element) {
+        const handleTouchMoveWithOptions = (e) => handleTouchMove(e);
+        const handleTouchStartWithOptions = (e) => handleTouchStart(e, parseInt(index));
+
+        // Remove any existing listeners to prevent duplicates
+        element.removeEventListener('touchmove', handleTouchMoveWithOptions);
+        element.removeEventListener('touchstart', handleTouchStartWithOptions);
+
+        // Add the touch listeners with passive: false
+        element.addEventListener('touchmove', handleTouchMoveWithOptions, { passive: false });
+        element.addEventListener('touchstart', handleTouchStartWithOptions, { passive: false });
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      Object.entries(statementElementsRef.current).forEach(([index, element]) => {
+        if (element) {
+          const handleTouchMoveWithOptions = (e) => handleTouchMove(e);
+          const handleTouchStartWithOptions = (e) => handleTouchStart(e, parseInt(index));
+          element.removeEventListener('touchmove', handleTouchMoveWithOptions);
+          element.removeEventListener('touchstart', handleTouchStartWithOptions);
+        }
+      });
+    };
+  }, [_statements, activeTouchStatement]); // Re-run when statements or active touch changes
 
   // Generate statement className based on state
   const getStatementClass = (statement) => {
@@ -129,7 +161,7 @@ export default function StatementSorting(props) {
   const handleTouchMove = (e) => {
     if (activeTouchStatement === null || _isSubmitted) return;
 
-    // Prevent scrolling while dragging - add passive: false to make it more effective
+    // Prevent scrolling while dragging
     e.preventDefault();
     e.stopPropagation();
 
@@ -206,16 +238,11 @@ export default function StatementSorting(props) {
   const isShowCorrectVisible = _isSubmitted && _canShowModelAnswer && !_isModelAnswerShown;
   const isHideCorrectVisible = _isSubmitted && _canShowModelAnswer && _isModelAnswerShown;
 
-  // Render touch guide if on a touch device and not submitted
-  const renderTouchGuide = () => {
-    if (isTouchDevice && !_isSubmitted) {
-      return (
-        <div className="statement-sorting__touch-guide">
-          <p>Tap and hold a statement to drag it to a bucket</p>
-        </div>
-      );
+  // Helper function to safely store refs with their indices
+  const setStatementRef = (element, index) => {
+    if (index !== undefined) {
+      statementElementsRef.current[index] = element;
     }
-    return null;
   };
 
   return (
@@ -241,9 +268,6 @@ export default function StatementSorting(props) {
         )}
       </div>
 
-      {/* Touch guide for mobile users */}
-      {renderTouchGuide()}
-
       <div className={`component__widget statement-sorting__widget ${_isSubmitted ? 'is-submitted' : ''} ${_isModelAnswerShown ? 'is-showing-model-answer' : ''} ${isTouchDevice ? 'is-touch-device' : ''}`}>
         {/* Statements container - where statements start */}
         <div
@@ -262,9 +286,8 @@ export default function StatementSorting(props) {
                   className={getStatementClass(statement)}
                   draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop if not submitted
                   onDragStart={(e) => handleDragStart(e, index)}
-                  onTouchStart={(e) => handleTouchStart(e, index)}
-                  onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
+                  ref={(el) => setStatementRef(el, index)}
                   style={{
                     position: 'absolute',
                     left: '50%',
@@ -327,9 +350,8 @@ export default function StatementSorting(props) {
                         className={getStatementClass(statement)}
                         draggable={!_isSubmitted && !isTouchDevice} // Only draggable on desktop if not submitted
                         onDragStart={(e) => handleDragStart(e, statementIndex)}
-                        onTouchStart={(e) => handleTouchStart(e, statementIndex)}
-                        onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
+                        ref={(el) => setStatementRef(el, statementIndex)}
                       >
                         {statement.text}
                       </div>
